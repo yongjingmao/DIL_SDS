@@ -15,7 +15,7 @@ The DIL code has been tested on pytorch 1.13.1 with python 3.7 and cuda 11.7. Pl
 conda create -n DIL python=3.7
 conda activate DIL
 conda install pytorch==1.13.1 torchvision==0.14.1 torchaudio==0.13.1 pytorch-cuda=11.6 -c pytorch -c nvidia
-conda install -c conda-forge opencv
+conda install -c conda-forge geopandas opencv scipy rasterio 
 ```
 
 ## 2.Usage
@@ -33,11 +33,11 @@ To retrieve from the GEE server the available satellite images cropped around th
 To download Landsat images:
 ```
 conda activate coastsat
-python src\optical_download.py
+python src/optical_download.py
 ```
 To download Sentinel 1 images
 ```
-python src\S1_download.py
+python src/S1_download.py
 ```
 ### 2.2 Preprocess images (pairing, warp, and cloud synthesizing)
 Run preprocess.py to pair, warp and superimpose clouds to clear optical images. The following arguements are required:\
@@ -62,9 +62,9 @@ Use DIL_run.py to reconstruct cloud contaminated images. The following arguement
 `--paired`: Stores true value. Adding this arguement will only include optical images paired with SAR.\
 ```
 conda activate DIL
-python src/DIL_run.py --data_path data/Narrabeen/S1_Landsat --res_dir results --train_mode DIP-Vid-3DCN --resize 384 192 --batch_size 5 --input_type S1 --cloud_ratio 0.5 --num_pass 10 
+python src/DIL_run.py --data_path data/Narrabeen/S1_Landsat --res_dir results/Narrabeen --train_mode DIP-Vid-3DCN --resize 384 192 --batch_size 5 --input_type S1 --cloud_ratio 0.5 --num_pass 10 
 ```
-- More parameters of DIL model itself can be tuned in the config files in `DIL\configs`
+- More parameters of DIL model itself can be tuned in the config files in `DIL/configs`
 
 
 
