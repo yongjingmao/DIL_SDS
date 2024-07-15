@@ -10,12 +10,12 @@ conda install -c conda-forge rasterio
 ```
 ### 1.2 Create DIL env
 
-The DIL code has been tested on pytorch 1.13.1 with python 3.5 and cuda 11.7. Please refer to [requirements.txt](https://github.com/yongjingmao/DIL_SDS/blob/main/requirements.txt) for details.
+The DIL code has been tested on pytorch 1.13.1 with python 3.7 and cuda 11.7. Please refer to [requirements.txt](https://github.com/yongjingmao/DIL_SDS/blob/main/requirements.txt) for details.
 ```
 conda create -n DIL python=3.7
 conda activate DIL
+conda install pytorch==1.13.1 torchvision==0.14.1 torchaudio==0.13.1 pytorch-cuda=11.6 -c pytorch -c nvidia
 conda install -c conda-forge opencv
-conda install pytorch torchvision torchaudio pytorch-cuda=11.6 -c pytorch -c nvidia
 ```
 
 ## 2.Usage
