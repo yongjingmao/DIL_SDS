@@ -62,7 +62,7 @@ Use DIL_run.py to reconstruct cloud contaminated images. The following arguement
 `--paired`: Stores true value. Adding this arguement will only include optical images paired with SAR.\
 ```
 conda activate DIL
-python src/DIL_run.py --data_path data/Narrabeen/S1_Landsat --res_dir result --train_mode DIP-Vid-3DCN --resize 384 192 --batch_size 5 --input_type S1 --cloud_ratio 50 --num_pass 10 
+python src/DIL_run.py --data_path data/Narrabeen/S1_Landsat --res_dir results --train_mode DIP-Vid-3DCN --resize 384 192 --batch_size 5 --input_type S1 --cloud_ratio 0.5 --num_pass 10 
 ```
 - More parameters of DIL model itself can be tuned in the config files in `DIL\configs`
 
