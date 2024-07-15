@@ -1,0 +1,4 @@
+torch==1.13.1
+torchvision==0.14.1
+opencv-contrib-python==4.8.0.76
+cupy==10.6.0
