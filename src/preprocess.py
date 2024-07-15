@@ -1,15 +1,17 @@
 # All the dataloaders are implemented in this file.
+import sys
+sys.path.append('../CoastSat')
+from coastsat.SDS_shoreline import *
+
 import argparse
-import torch
-from scipy.ndimage.filters import gaussian_filter
+from scipy.ndimage import gaussian_filter
 import numpy as np
-from torch.utils.data import Dataset
 from skimage import transform as sk_transform
 from skimage.io import imread
 import os
-import pandas
+import pandas as pd
 
-import rasterio
+import rasterio as rio
 from rasterio.warp import reproject, Resampling
 
 
@@ -18,7 +20,7 @@ def parse_args():
     parser.add_argument('--data_path', type=str, 
                         default='data/Narrabeen/S1_Landsat', 
                         help='Data path for optical images', metavar='')
-    parser.add_argument('--cloud_ratio', type=int, 
+    parser.add_argument('--cloud_ratio', type=float, 
                         default=0.5, 
                         help='Ratio of cloud to superimpose, rangeing between 0 and 1', metavar='')
     parser.add_argument('--temporal_var', action='store_true', 
@@ -49,7 +51,7 @@ def img_warp(img, profile, dst_profile, dst_fp):
     profile['width'] = dst_profile['width']
     profile['height'] = dst_profile['height']
 
-    with rasterio.open(dst_fp, 'w', **profile) as dst:
+    with rio.open(dst_fp, 'w', **profile) as dst:
         dst.write(destin)
     return dst_fp
 
@@ -168,7 +170,7 @@ def main(args):
     cloud_ratio = args.cloud_ratio
     temporal_var = args.temporal_var
     
-    in_opt_folder = os.path.join(data_path, 'L8-L9')
+    in_opt_folder = os.path.join(data_path, 'Optical')
     in_sar_folder = os.path.join(data_path, 'SAR')
     in_mask_folder = os.path.join(data_path, 'Mask')
 
@@ -177,9 +179,9 @@ def main(args):
     else:
         out_suffix = ''
 
-    out_opt_folder  = os.path.join(data_path, "L8-L9_{:d}{}".format(cloud_ratio*100, out_suffix)
-    out_mask_folder = os.path.join(data_path, "Mask_{:d}{}".format(cloud_ratio*100, out_suffix)
-    out_mndwi_folder = os.path.join(data_path, "MNDWI_{:d}{}".format(cloud_ratio*100, out_suffix)
+    out_opt_folder  = os.path.join(data_path, "Optical_{:d}{}".format(int(cloud_ratio*100), out_suffix))
+    out_mask_folder = os.path.join(data_path, "Mask_{:d}{}".format(int(cloud_ratio*100), out_suffix))
+    out_mndwi_folder = os.path.join(data_path, "MNDWI_{:d}{}".format(int(cloud_ratio*100), out_suffix))
 
     if not os.path.exists(out_opt_folder):
         os.mkdir(out_opt_folder)
@@ -218,27 +220,27 @@ def main(args):
     
     opt_df['SAR_id'] = paired_S1
     opt_df['Time'] = pd.to_datetime(opt_df['Time'], unit='ms')
-    pair_df = opt_df.sort_values('Time').dropna(1)
-    
+    pair_df = opt_df.sort_values('Time')    
     pair_df = pair_df[pair_df['SAR_id']!=''].reset_index(drop=True)
     pair_df.to_csv(pair_fp, index=False)
 
     """
-    Warp optical image to SAR images
+    Warp optical images to SAR image
     """
+    print('Warp optical images to SAR image')
     target_fp = os.path.join(in_sar_folder, pair_df.loc[0, 'SAR_id']+'.tif')
-    with rasterio.open(target_fp) as src_dst:
+    with rio.open(target_fp) as src_dst:
         dst_img = src_dst.read()
         dst_profile  = src_dst.meta
 
-    for i, row in pair_df.iterrows():
-        for column in ['optical_id', 'SAR_id', 'Mask_id']:
+    for i, row in opt_df.iterrows():
+        for column in ['optical_id', 'Mask_id']:
             if column == 'Mask_id':
                 source_fp = os.path.join(folders[column], row['optical_id']+'_Mask.tif')
             else:
                 source_fp = os.path.join(folders[column], row[column]+'.tif')
                 
-            with rasterio.open(source_fp) as src_source:
+            with rio.open(source_fp) as src_source:
                 profile = src_source.meta
                 img = src_source.read()
                 
@@ -249,11 +251,21 @@ def main(args):
     """
     Add synthetic clouds and calculate MNDWI
     """
-    cloudfree_df = pair_df.loc[meta_df['Cloud_percent']<20, :]
+    print('Add synthetic clouds to clear optical images')
+    cloudfree_df = opt_df.loc[opt_df['Cloud_percent']<20, :]
     cloudfree_name = list(cloudfree_df['optical_id']+'.tif')
     
-    cloudfull_df = pair_df.loc[meta_df['Cloud_percent']>80, :]
+    cloudfull_df = opt_df.loc[opt_df['Cloud_percent']>80, :]
     cloudfull_name = list(cloudfull_df['optical_id']+'.tif')
+    
+    if temporal_var:
+        opt_df['Datetime'] = pd.to_datetime(opt_df['Time'], unit='ms')
+        opt_df['Season'] = opt_df['Datetime'].dt.month%12 // 3 + 1
+        seasonal_cloud = opt_df[['Season', 'Cloud_percent']].groupby('Season').median()
+        seasonal_cloud['Cloud_scale'] = rescale(seasonal_cloud['Cloud_percent'], cloud_ratio, 0.2)
+        opt_df = pd.merge(opt_df, seasonal_cloud[['Cloud_scale']], on='Season', how='left')
+    else:
+        opt_df['Cloud_scale'] = cloud_ratio
 
     cloud_imgs = []
     for name in cloudfull_name:
@@ -262,11 +274,11 @@ def main(args):
             cloud_imgs.append(src.read())
     cloud_imgs = np.stack(cloud_imgs)
 
-    for i, row in pair_df.iterrows():
+    for i, row in opt_df.iterrows():
         basename = row['optical_id'] + '.tif'
         maskname = basename.replace('.tif', '_Mask.tif')
         mndwiname = basename.replace('.tif', '_MNDWI.tif')
-        in_opt_file = os.path.join(in_opt_older, basename)
+        in_opt_file = os.path.join(in_opt_folder, basename)
         in_mask_file = os.path.join(in_mask_folder, maskname)
         out_opt_file = os.path.join(out_opt_folder, basename)
         out_mask_file = os.path.join(out_mask_folder, maskname)
@@ -282,14 +294,14 @@ def main(args):
                 new_img, mask_simu = add_cloud(img, cloud_imgs, row['Cloud_scale'])
                 mask_simu = np.expand_dims(mask_simu, 0)
                 mask = (mask + mask_simu)>=1
+                mask = mask.astype('uint8')
     
             else:
                 new_img = img
                 
             mask_profile = profile.copy()
-            mask_profile.update({'count':1, 'dtype':'uint8'})
+            mask_profile.update({'count':1, 'dtype':'uint8', 'nodata': 2})
             
-            label_profile = mask_profile.copy()
             mndwi_profile = mask_profile.copy()
             mndwi_profile['dtype'] = 'float32'
     
@@ -299,21 +311,12 @@ def main(args):
             with rio.open(out_mask_file, 'w', **mask_profile) as dst:
                 dst.write(mask)
     
-            if mission == 'Landsat':
-                input_img = new_img.transpose(1,2,0)
-                im_mndwi = SDS_tools.nd_index(input_img[:,:,4], input_img[:,:,1], mask[0]==1)
-                im_mndwi = np.where(np.isnan(im_mndwi), -1, im_mndwi).astype(np.float32)
-                im_mndwi = np.expand_dims(im_mndwi, 0)
-                if np.sum(mask[0]==0) == 0:
-                    im_label = np.zeros(mask.shape)
-                else:
-                    min_beach_area_pixels = np.ceil(1000/30**2)
-                    im_classif, im_labels = classify_image_NN(input_img, mask[0]==1, min_beach_area_pixels, clf)
-                    im_label = np.where(np.isnan(im_classif), 0, im_classif+1).astype('uint8')
-                    im_label = np.expand_dims(im_label, 0)
-                
-                with rio.open(out_mndwi_file, 'w', **mndwi_profile) as dst:
-                    dst.write(im_mndwi)
+            im = new_img.transpose(1,2,0)
+            im_mndwi = SDS_tools.nd_index(im[:,:,4], im[:,:,1], mask[0]==1)
+            im_mndwi = np.where(np.isnan(im_mndwi), -1, im_mndwi).astype(np.float32)
+            im_mndwi = np.expand_dims(im_mndwi, 0)            
+            with rio.open(out_mndwi_file, 'w', **mndwi_profile) as dst:
+                dst.write(im_mndwi)
 
 
 if __name__ == '__main__':

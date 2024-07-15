@@ -5,9 +5,6 @@ Created on Wed Aug  9 11:01:56 2023
 @author: Yongjing Mao
 """
 
-from GEE_MLR import GEE_funcs
-from GEE_MLR.utilities import check_task_status
-from GEE_MLR import utilities
 from osgeo import gdal
 import os
 import pathlib
@@ -23,9 +20,6 @@ import ee
 import sys
 import zipfile
 import requests
-
-sys.path.append('..\..\gee_s1_ard\python-api')
-import wrapper
 
 
     
@@ -68,8 +62,7 @@ def main():
      Read input and set parameters
     ==============================
     """
-    cfg = json.load(open(r"..\config\download_config.json", 'r'))
-    S1_param = json.load(open(r"..\config\S1Ard_config.json", 'r'))
+    cfg = json.load(open(r"download_configs\download_config.json", 'r'))
     
     """
     Define input parameters
@@ -78,7 +71,6 @@ def main():
     # Name of Input optical missions, choose from L8 (Landsat8) and S2
     START_DATE = cfg["START_DATE"]  # Starting date of analysis
     END_DATE = cfg["END_DATE"]  # Ending date of analysis
-    S1_SMOOTH = cfg["S1_SMOOTH"] # Whether smooth S1 images
     OUT_DIR = cfg["OUT_DIR"]
     # Area of interest (AOI) should be saved into a json or shp file
     AOI_PATH = cfg["AOI_PATH"]
@@ -102,30 +94,21 @@ def main():
     """
     Define S1_ard parameters
     """
-    if S1_SMOOTH:
-        S1_param.update([('START_DATE', START_DATE),
-                         ('STOP_DATE', END_DATE),
-                         ('ROI', AOI),
-                         ('DEM', ee.Image('USGS/SRTMGL1_003'))])
-
-        
-        S1 = wrapper.s1_preproc(S1_param).select(['VV', 'VH'])
-    else:
-        S1 = ee.ImageCollection('COPERNICUS/S1_GRD').select(
-            [
-                'VV',
-                'VH']).filter(
-            ee.Filter.listContains(
-                'transmitterReceiverPolarisation',
-                'VV')).filter(
-            ee.Filter.listContains(
-                'transmitterReceiverPolarisation',
-                'VH')).filter(
-            ee.Filter.eq(
-                'instrumentMode',
-                'IW')) .filterBounds(AOI).filterDate(
-            START_DATE,
-            END_DATE)
+    S1 = ee.ImageCollection('COPERNICUS/S1_GRD').select(
+        [
+            'VV',
+            'VH']).filter(
+        ee.Filter.listContains(
+            'transmitterReceiverPolarisation',
+            'VV')).filter(
+        ee.Filter.listContains(
+            'transmitterReceiverPolarisation',
+            'VH')).filter(
+        ee.Filter.eq(
+            'instrumentMode',
+            'IW')) .filterBounds(AOI).filterDate(
+        START_DATE,
+        END_DATE)
                     
     def count_mask(img):
       mask_count = img.select('VV').mask().eq(0).reduceRegion(ee.Reducer.sum(), AOI, 100)

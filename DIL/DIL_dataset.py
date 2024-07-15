@@ -26,6 +26,7 @@ class Dataset(object):
         # Read sar and optical metadata
         self.sar_meta_fp = os.path.join(self.cfg['data_path'], 'S1.csv')
         self.optical_meta_fp = os.path.join(self.cfg['data_path'], 'optical.csv')
+        self.ref_line_fp = os.path.join(self.cfg['data_path'], 'ref_shoreline.geojson')
 
         S1_df = pd.read_csv(self.sar_meta_fp)
         opt_df = pd.read_csv(self.optical_meta_fp)
@@ -50,12 +51,8 @@ class Dataset(object):
             self.meta = meta_df.reset_index(drop=True)
         
         self.sar_path = os.path.join(self.cfg['data_path'], 'SAR')
-        if self.cfg['optical'] == 'S2':            
-            self.opt_path = os.path.join(self.cfg['data_path'], 'S2_Random')
-            self.mask_path = os.path.join(self.cfg['data_path'], 'Mask_Random')
-        else:
-            self.opt_path = os.path.join(self.cfg['data_path'], 'MNDWI_{}'.format(int(self.cfg['cloudratio']*100)))
-            self.mask_path = os.path.join(self.cfg['data_path'], 'Mask_{}'.format(int(self.cfg['cloudratio']*100)))
+        self.opt_path = os.path.join(self.cfg['data_path'], 'MNDWI_{}'.format(int(self.cfg['cloud_ratio']*100)))
+        self.mask_path = os.path.join(self.cfg['data_path'], 'Mask_{}'.format(int(self.cfg['cloud_ratio']*100)))
         
 
         
@@ -66,7 +63,6 @@ class Dataset(object):
 
         if not self.cfg['resize'] is None:
             self.frame_H, self.frame_W = self.cfg['resize']
-        #self.frame_sum = self.cfg['frame_sum'] = min(self.cfg['frame_sum'], frame_sum_true)
         self.frame_sum =  len(self.meta)
         self.frame_size = self.cfg['frame_size'] = (self.frame_H , self.frame_W)
         self.batch_size = self.cfg['batch_size']
@@ -110,7 +106,7 @@ class Dataset(object):
             self.image_all.append(frame)
             
             # Read mask data
-            mask, contour = self.init_mask(mask_id, ref_line_path=self.cfg['ref_line_path'])
+            mask, contour = self.init_mask(mask_id, ref_line_path=self.ref_line_fp)
             self.mask_all.append(mask)
             self.contour_all.append(contour)
                         

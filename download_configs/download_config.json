@@ -1,11 +1,10 @@
 {
-    "AOI_PATH": "..\\AOIs\\Castelldefels.geojson",
-    "AOI_NAME": "Castelldefels",
+    "AOI_PATH": "data\\Narrabeen\\AOI.geojson",
+    "AOI_NAME": "Narrabeen",
     "OPTICAL_MISSION": ["L8", "L9"],
     "START_DATE": "2017-01-01",
     "END_DATE": "2023-01-01",
 	"S1_MOSAIC_WINDOW": 1,
-	"S1_SMOOTH": false,
 	"PROCESS_STAGE": "TOA",
-	"OUT_DIR": "C:\\Users\\z3541792\\OneDrive - UNSW\\Research\\Data\\SAR_OPT\\Castelldefels\\S1_Landsat"
+	"OUT_DIR": "data\\Narrabeen\\S1_Landsat"
 }

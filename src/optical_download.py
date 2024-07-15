@@ -5,9 +5,6 @@ Created on Wed Aug  9 11:01:56 2023
 @author: Yongjing Mao
 """
 
-from GEE_MLR import GEE_funcs
-from GEE_MLR.utilities import check_task_status
-from GEE_MLR import utilities
 from osgeo import gdal
 import os
 import pathlib
@@ -107,7 +104,7 @@ def main():
      Read input and set parameters
     ==============================
     """
-    cfg = json.load(open(r"..\config\download_config.json", 'r'))
+    cfg = json.load(open(r"download_configs\download_config.json", 'r'))
     
     """
     Define input parameters
@@ -306,7 +303,7 @@ def main():
     
     # Image download
     paths = {
-        'Optical': os.path.join(OUT_DIR, '-'.join(OPTICAL_MISSION)),
+        'Optical': os.path.join(OUT_DIR, 'Optical'),
         'Panchromatic': os.path.join(OUT_DIR, 'Panchromatic'),
         'Mask': os.path.join(OUT_DIR, 'Mask')
         }
