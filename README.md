@@ -2,13 +2,14 @@
 Use Deep Internal Learning (DIL) to reconstruct cloud-contaminated images and apply satellite derived shoreline
 
 ## 1.Install
-### 1.1 Install coastsat
+### 1.1 Creat coastsat env
 Install CoastSat Toolbox following the instruction [here](https://github.com/kvos/CoastSat?tab=readme-ov-file#installation).
-### 1.2 Install other required packages
 ```
 conda install -c conda-forge rasterio opencv
 ```
-The code has been tested on pytorch 1.13.1 with python 3.5 and cuda 11.7. Please refer to [requirements.txt](https://github.com/yongjingmao/DIL_SDS/blob/main/requirements.txt) for details.
+### 1.2 Create DIL env
+
+The DIL code has been tested on pytorch 1.13.1 with python 3.5 and cuda 11.7. Please refer to [requirements.txt](https://github.com/yongjingmao/DIL_SDS/blob/main/requirements.txt) for details.
 ```
 conda install -c conda-forge torch 
 ```
