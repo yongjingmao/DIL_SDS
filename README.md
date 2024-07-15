@@ -32,7 +32,7 @@ To retrieve from the GEE server the available satellite images cropped around th
 
 To download Landsat images:
 ```
-activate coastsat
+conda activate coastsat
 python src\optical_download.py
 ```
 To download Sentinel 1 images
@@ -45,7 +45,7 @@ Run preprocess.py to pair, warp and superimpose clouds to clear optical images. 
 `--cloud_ratio`: The ratio of cloud to superimpose, ranging between 0 and 1.\
 `--temporal_var`: Stores true value. Adding this arguement will add seasonallity to synthetic clouds.
 ```
-activate coastsat
+conda activate coastsat
 python src/preprocess.py --data_path data/Narrabeen/S1_Landsat  --cloud_ratio 0.5
 ```
 
@@ -61,7 +61,7 @@ Use DIL_run.py to reconstruct cloud contaminated images. The following arguement
 `--num_pass`: Number of passes for DIL model.\
 `--paired`: Stores true value. Adding this arguement will only include optical images paired with SAR.\
 ```
-activate DIL
+conda activate DIL
 python src/DIL_run.py --data_path data/Narrabeen/S1_Landsat --res_dir result --train_mode DIP-Vid-3DCN --resize 384 192 --batch_size 5 --input_type S1 --cloud_ratio 50 --num_pass 10 
 ```
 - More parameters of DIL model itself can be tuned in the config files in `DIL\configs`
