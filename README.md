@@ -4,8 +4,9 @@ Use Deep Internal Learning (DIL) to reconstruct cloud-contaminated images and ap
 ## 1.Install
 ### 1.1 Creat coastsat env
 Install CoastSat Toolbox following the instruction [here](https://github.com/kvos/CoastSat?tab=readme-ov-file#installation).
+In addition to standard CoastSat Toolbox:
 ```
-conda install -c conda-forge rasterio opencv
+conda install -c conda-forge rasterio
 ```
 ### 1.2 Create DIL env
 
