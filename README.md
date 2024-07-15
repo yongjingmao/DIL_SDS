@@ -13,13 +13,13 @@ conda install -c conda-forge rasterio
 ### 2.1 Download images
 To retrieve from the GEE server the available satellite images cropped around the user-defined region of coastline for the particular time period of interest, the following variables are required in `download_configs/download_config.json`:\
 `AOI_PATH`: Path to the user-defined area of interest (AOI), an example is provided in `data/Narrabeen/AOI.geojson`.\
+`OUT_DIR`: Directory to save image outputs.\
 `AOI_NAME`: Name (e.g. Narrabeen) for the AOI.\
 `OPTICAL_MISSION`: Landsat missions to include (e.g. ["L8", "L9"] representing Landsat 8 and Landsat 9).\
 `STAET_DATE`: Starting data for image retrieving (e.g. "2017-01-01").\
 `END_DATE`: Starting data for image retrieving (e.g. "2023-01-01").\
 `S1_MOSAIC_WINDOW`: Time window (in days) to mosaic Sentinel 1 images.\
-`PROCESS_STAGE`: Stages of optical images to use ("TOA"|"SR"), choose between Top Of Atmosphere (TOA) or Surface Reflectance (SR).\
-`OUT_DIR`: Directory to save image outputs.\
+`PROCESS_STAGE`: Stages of optical images to use ("TOA"|"SR"), choose between Top Of Atmosphere (TOA) or Surface Reflectance (SR).
 
 To download Landsat images:
 ```
@@ -30,18 +30,30 @@ To download Sentinel 1 images
 python src\S1_download.py
 ```
 ### 2.2 Preprocess images (pairing, warp, and cloud synthesizing)
-Run preprocess.py to pair, warp and superimpose clouds to clear optical images. The following arguements are required:
-`--data_path`: The path of previously downloaded data (The same as `OUT_DIR` in download_config.json).
-`--cloud_ratio`: The ratio of cloud to superimpose, ranging between 0 and 1
+Run preprocess.py to pair, warp and superimpose clouds to clear optical images. The following arguements are required:\
+`--data_path`: The path of previously downloaded data (The same as `OUT_DIR` in download_config.json).\
+`--cloud_ratio`: The ratio of cloud to superimpose, ranging between 0 and 1.\
 `--temporal_var`: Stores true value. Adding this arguement will add seasonallity to synthetic clouds.
 ```
-python src/preprocess.py --data_path {} --cloud_ratio {}
+python src/preprocess.py --data_path data/Narrabeen/S1_Landsat  --cloud_ratio 0.5
 ```
-- More parameters to config can be found with
-```
-python src/preprocess.py -h
-```
-
 
 ### 2.3 Run DIL model for image reconstruction
+Use DIL_run.py to reconstruct cloud contaminated images. The following arguements are required:\
+`--data_path`: The same as `data_path` in preprocess.\
+`--res_dir`: Directory to save model outputs.\
+`--train_mode`: Type of DIL model to use. Choose among DIP|DIP_Vid|DIP_Vid_3DCN|DIP_Vid_Flow
+`--resize`: Tuples include Height and width of the output. Both must be the multiples of 64. Input images will be clipped and resampled to fit the resize.\
+`--batch_size`: Batch size of DIL model. batch_size = 5 is the optimum value for the example Narrabeen site.\
+`--input_type`: Type of input priors. Choose between 'S1'|'Noise'.\
+`--cloud_ratio`: The same as `cloud_ratio` in preprocess.\
+`--num_pass`: Number of passes for DIL model.\
+`--paired`: Stores true value. Adding this arguement will only include optical images paired with SAR.\
+```
+python src/DIL_run.py --data_path data/Narrabeen/S1_Landsat --res_dir result --train_mode DIP-Vid-3DCN --resize 384 192 --batch_size 5 --input_type S1 --cloud_ratio 50 --num_pass 10 
+```
+- More parameters of DIL model itself can be tuned in the config files in `DIL\configs`
+
+
+
 ### 2.4 Run CoastSat for shoreline extraction
