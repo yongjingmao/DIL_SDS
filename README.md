@@ -43,7 +43,7 @@ python src/S1_download.py
 - SAR, Optical images and Optical Masks will be downloaded to subfolders `SAR`, `Optical` and `Mask` in `OUT_DIR/S1_Landsat` respectively.
 
 ### 2.2 Preprocess images (pairing, warp, and cloud synthesizing)
-Run preprocess.py to pair, warp and superimpose clouds to clear optical images. The following arguements are required:\
+Run `preprocess.py` to pair, warp and superimpose clouds to clear optical images. The following arguements are required:\
 `--data_path`: The path of previously downloaded data (The same as `OUT_DIR`).\
 `--cloud_ratio`: The ratio of cloud to superimpose, ranging between 0 and 1.\
 `--temporal_var`: Stores true value. Adding this arguement will add seasonallity to synthetic clouds.
@@ -55,7 +55,7 @@ python src/preprocess.py --data_path data/Narrabeen  --cloud_ratio 0.5
 - Resultant synthetic images of optical, mndwi and cloud mask are saved in subfolders `Optical_50`, `MNDWI_50`and `Mask_50` in `data_path/S1_Landsat` respectively
 
 ### 2.3 Run DIL model for image reconstruction
-Use DIL_run.py to reconstruct cloud contaminated images. The DIL model requires a reference shoreline and an exaple is provided as `data/Narrabeen/ref_shoreline.geojson`.\
+Use `DIL_run.py` to reconstruct cloud contaminated images. The DIL model requires a reference shoreline and an exaple is provided as `data/Narrabeen/ref_shoreline.geojson`.\
 The following arguements are required:\
 `--data_path`: The same as `data_path` in preprocess.\
 `--res_dir`: Directory to save model outputs.\
@@ -73,9 +73,19 @@ python src/DIL_run.py --data_path data/Narrabeen --res_dir results/Narrabeen --t
 - More parameters of DIL model itself can be tuned in the config files in `DIL/configs`.
 - Mdel result of each pass will be saved in `res_dir` as an individual subfolder.
 
-
-
 ### 2.4 Run CoastSat for shoreline extraction
+Run `shoreline_extraction.py` to extract shorelines based on target and modelled MNDWI images. The following arguements are required:\
+`--data_path`: The same as `data_path` in preprocess.\
+`--result_path`: The same as `res_dir` in preprocess.\
+`--cloud_ratio`: The same as `cloud_ratio` in preprocess.\
+`--num_pass`: The same as `num_pass` in DIL_run.\
+`--max_dist_ref`: Maximum allowed distance (m) to reference shoreline.\
+`--min_length`: Minimum allowed length (m) of shoreline segments.\
+```
+conda activate coastsat
+python src/shoreline_extraction.py --data_path data/Narrabeen --result_path results/Narrabeen --cloud_ratio 0.5 --num_pass 10 --max_dist_ref 100 --min_length 50
+```
+- Target shoreline positions are saved as `SDS.csv` in `data_path`; modelled shorelne positions under and outside of synthetic clouds are saved as `SDS_cloud.csv` and `SDS_clear.csv` in `result_path`.
 
 ## Acknowledgement
 The implementation of the DIL network architecture is mostly borrowed from the [IL_video_inpainting](https://github.com/Haotianz94/IL_video_inpainting/tree/master). The shoreline extraction is mostly based on the [CoastSat Toolbox](https://github.com/kvos/CoastSat/tree/master). Should you be making use of this work, please make sure to adhere to the licensing terms of the original authors.
