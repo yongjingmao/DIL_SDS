@@ -50,9 +50,9 @@ Run preprocess.py to pair, warp and superimpose clouds to clear optical images. 
 
 ```
 conda activate coastsat
-python src/preprocess.py --data_path data/Narrabeen/S1_Landsat  --cloud_ratio 0.5
+python src/preprocess.py --data_path data/Narrabeen  --cloud_ratio 0.5
 ```
-- Resultant synthetic images of optical, mndwi and cloud mask are saved in subfolders `Optical_50`, `MNDWI_50`and `Mask_50` in `data_path\S1_Landsat` respectively
+- Resultant synthetic images of optical, mndwi and cloud mask are saved in subfolders `Optical_50`, `MNDWI_50`and `Mask_50` in `data_path/S1_Landsat` respectively
 
 ### 2.3 Run DIL model for image reconstruction
 Use DIL_run.py to reconstruct cloud contaminated images. The DIL model requires a reference shoreline and an exaple is provided as `data/Narrabeen/ref_shoreline.geojson`.\
