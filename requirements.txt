@@ -1,4 +1,7 @@
 torch==1.13.1
 torchvision==0.14.1
+cupy-cuda117==10.0.6
 opencv-contrib-python==4.8.0.76
-cupy==10.6.0
+geopandas==0.10.2
+rasterio==1.2.10
+scipy==1.7.3
