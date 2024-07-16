@@ -48,23 +48,18 @@ class exp(object):
         # Build result folder
         res_dir = self.cfg['res_dir']
         if not res_dir is None:
-            res_dir = os.path.join(res_dir, self.cfg['optical'])
-            self.cfg['res_dir'] = res_dir
+            # res_dir = os.path.join(res_dir, self.cfg['optical'])
+            # self.cfg['res_dir'] = res_dir
             if os.path.exists(res_dir):
-                print("Warning: Video folder existed!")
+                print("Warning: Result folder existed!")
             mkdir(res_dir)
             mkdir(os.path.join(res_dir, 'model'))
             for pass_idx in range(self.cfg['num_pass']):
-                if (pass_idx + 1) % self.cfg['save_every_pass'] == 0:
-                    res_dir = os.path.join(self.cfg['res_dir'], '{:03}'.format(pass_idx + 1))
-                    mkdir(res_dir)
-                    iter = self.cfg['save_every_iter']
-                    while iter <= self.cfg['num_iter']:
-                        build_dir(res_dir, '{:05}'.format(iter))
-                        iter += self.cfg['save_every_iter']
-                    #build_dir(res_dir, 'final')
-                    if self.cfg['train_mode'] == 'DIP':
-                        build_dir(res_dir, 'best_nonhole')
+                res_dir = os.path.join(self.cfg['res_dir'], '{:03}'.format(pass_idx + 1))
+                mkdir(res_dir)
+                #build_dir(res_dir, 'final')
+                if self.cfg['train_mode'] == 'DIP':
+                    build_dir(res_dir, 'best_nonhole')
 
         # Setup logging
         logging.basicConfig(level=self.cfg['logging_level'], format='%(message)s')
@@ -330,16 +325,16 @@ class exp(object):
                 best_loss_recon_image = loss['recon_image'].item()
                 best_nonhole_batch = batch_data['out_img_batch']
                 best_iter = iter_idx
+                # Plot and save
+                if (pass_idx + 1) % self.cfg['save_every_pass'] == 0:
+                    self.plot_and_save(batch_idx, batch_data, '{:03}'.format(pass_idx + 1))
             
             log_str = 'Iteration {:05}'.format(iter_idx)
             for loss_name in sorted(self.cfg['loss_weight']):
                 if self.cfg['loss_weight'][loss_name] != 0:
                     log_str += '  ' + loss_name + ' {:f}'.format(loss[loss_name].item())
             self.logger.info(log_str)
-            
-            # Plot and save
-            if (pass_idx + 1) % self.cfg['save_every_pass'] == 0 and (iter_idx + 1) % self.cfg['save_every_iter'] == 0:
-                self.plot_and_save(batch_idx, batch_data, '{:03}/{:05}'.format(pass_idx + 1, iter_idx + 1))
+
 
         log_str = 'Best at iteration {:05}, recon_image loss {:f}'.format(best_iter, best_loss_recon_image)
         self.logger.info(log_str)
@@ -375,8 +370,8 @@ class exp(object):
         self.logger.info(log_str)            
 
         # Plot and save
-        if (self.cfg['plot'] or self.cfg['save']) and (pass_idx + 1) % self.cfg['save_every_pass'] == 0:   
-            self.plot_and_save(batch_idx, batch_data, '{:03}/final'.format(pass_idx + 1))
+        # if (self.cfg['plot'] or self.cfg['save']) and (pass_idx + 1) % self.cfg['save_every_pass'] == 0:   
+        #     self.plot_and_save(batch_idx, batch_data, '{:03}/final'.format(pass_idx + 1))
 
 
     def optimize_params(self, batch_data):

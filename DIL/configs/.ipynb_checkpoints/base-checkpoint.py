@@ -48,7 +48,6 @@ cfg['num_iter'] = 100
 cfg['num_pass'] = 20
 
 # Result
-cfg['save_every_iter'] = 100
 cfg['save_every_pass'] = 1
 cfg['plot'] = False
 cfg['save'] = True

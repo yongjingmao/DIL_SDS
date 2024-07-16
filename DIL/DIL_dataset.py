@@ -24,8 +24,8 @@ class Dataset(object):
             raise Exception("Input data path not found: {}".format(self.cfg['data_path']))
         
         # Read sar and optical metadata
-        self.sar_meta_fp = os.path.join(self.cfg['data_path'], 'S1.csv')
-        self.optical_meta_fp = os.path.join(self.cfg['data_path'], 'optical.csv')
+        self.sar_meta_fp = os.path.join(self.cfg['data_path'], 'S1_Landsat', 'S1.csv')
+        self.optical_meta_fp = os.path.join(self.cfg['data_path'], 'S1_Landsat', 'optical.csv')
         self.ref_line_fp = os.path.join(self.cfg['data_path'], 'ref_shoreline.geojson')
 
         S1_df = pd.read_csv(self.sar_meta_fp)
@@ -50,9 +50,9 @@ class Dataset(object):
         else:
             self.meta = meta_df.reset_index(drop=True)
         
-        self.sar_path = os.path.join(self.cfg['data_path'], 'SAR')
-        self.opt_path = os.path.join(self.cfg['data_path'], 'MNDWI_{}'.format(int(self.cfg['cloud_ratio']*100)))
-        self.mask_path = os.path.join(self.cfg['data_path'], 'Mask_{}'.format(int(self.cfg['cloud_ratio']*100)))
+        self.sar_path = os.path.join(self.cfg['data_path'], 'S1_Landsat', 'SAR')
+        self.opt_path = os.path.join(self.cfg['data_path'], 'S1_Landsat', 'MNDWI_{}'.format(int(self.cfg['cloud_ratio']*100)))
+        self.mask_path = os.path.join(self.cfg['data_path'], 'S1_Landsat', 'Mask_{}'.format(int(self.cfg['cloud_ratio']*100)))
         
 
         
