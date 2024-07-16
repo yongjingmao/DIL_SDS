@@ -81,7 +81,7 @@ Run `shoreline_extraction.py` to extract shorelines based on target and modelled
 `--min_length`: Minimum allowed length (m) of shoreline segments.\
 ```
 conda activate coastsat
-python src/shoreline_extraction.py --data_path data/Narrabeen --result_path results/Narrabeen --cloud_ratio 0.5 --num_pass 10 --max_dist_ref 100 --min_length 50
+python src/shoreline_extraction.py --data_path data/Narrabeen --result_path results/Narrabeen --cloud_ratio 0.5 --num_pass 10 --max_dist_ref 200 --min_length 50
 ```
 - Target shoreline positions are saved as `SDS.csv` in `data_path/S1_Landsat`; modelled shorelne positions under and outside of synthetic clouds are saved as `SDS_cloud.csv` and `SDS_clear.csv` in `result_path`.
 
