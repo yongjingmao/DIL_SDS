@@ -14,9 +14,7 @@ The DIL code has been tested on pytorch 1.13.1 with python 3.7 and cuda 11.7. Pl
 ```
 conda create -n DIL python=3.7
 conda activate DIL
-conda install pytorch==1.13.1 torchvision==0.14.1 pytorch-cuda=11.7 -c pytorch -c nvidia
-conda install -c conda-forge cupy
-conda install -c conda-forge geopandas opencv scipy rasterio 
+pip install -r requirements.txt
 ```
 
 ## 2.Usage
@@ -85,7 +83,7 @@ Run `shoreline_extraction.py` to extract shorelines based on target and modelled
 conda activate coastsat
 python src/shoreline_extraction.py --data_path data/Narrabeen --result_path results/Narrabeen --cloud_ratio 0.5 --num_pass 10 --max_dist_ref 100 --min_length 50
 ```
-- Target shoreline positions are saved as `SDS.csv` in `data_path`; modelled shorelne positions under and outside of synthetic clouds are saved as `SDS_cloud.csv` and `SDS_clear.csv` in `result_path`.
+- Target shoreline positions are saved as `SDS.csv` in `data_path/S1_Landsat`; modelled shorelne positions under and outside of synthetic clouds are saved as `SDS_cloud.csv` and `SDS_clear.csv` in `result_path`.
 
 ## Acknowledgement
 The implementation of the DIL network architecture is mostly borrowed from the [IL_video_inpainting](https://github.com/Haotianz94/IL_video_inpainting/tree/master). The shoreline extraction is mostly based on the [CoastSat Toolbox](https://github.com/kvos/CoastSat/tree/master). Should you be making use of this work, please make sure to adhere to the licensing terms of the original authors.
