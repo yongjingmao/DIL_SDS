@@ -1,14 +1,15 @@
 # DIL_SDS
-Use Deep Internal Learning (DIL) to reconstruct cloud-contaminated images and apply satellite derived shoreline
+This project applies a Deep Internal Learning ([DIL](https://github.com/Haotianz94/IL_video_inpainting)) to reconstruct cloud-contaminated MNDWI based on Landsat 8&9 images and extracts shoreline positions from reconstructed images with [CoastSat Toolbox](https://github.com/kvos/CoastSat). Different from the original DIL using either Gaussian noise as priors, the proposed method used the mixture of the Gaussian noise and Sentinel 1 SAR images based on the availability of SAR images. Additionally, a shoreline-focus loss function was introduced in this project to optimize the MNDWI reconstruction only in the 200 m buffer of the shoreline. 
+
 
 ## 1.Install
-### 1.1 Creat coastsat env
+### 1.1 Creat coastsat env to download images and extract shorelines
 Install CoastSat Toolbox following the instruction [here](https://github.com/kvos/CoastSat?tab=readme-ov-file#installation).
 In addition to standard CoastSat Toolbox:
 ```
 conda install -c conda-forge rasterio
 ```
-### 1.2 Create DIL env
+### 1.2 Create DIL env to reconstruct cloud-contaminated images
 
 The DIL code has been tested on pytorch 1.13.1 with python 3.7 and cuda 11.7. Please refer to [requirements.txt](https://github.com/yongjingmao/DIL_SDS/blob/main/requirements.txt) for details.
 ```
@@ -18,6 +19,12 @@ pip install -r requirements.txt
 ```
 
 ## 2.Usage
+Implementing DIL_SDS requires files below:\
+`AOI.geojson`: A polygon define the area of interest (AOI).\
+`transects.geojson`: A sequence of shore-normal transects to define shoreline position.\
+`ref_shoreline.geojson`: A reference shoreline to define area of focus in image reconstruction.\
+Examples of above files were provided for Narrabeen, Coolangatta, Ocean Beach, and Castelldefels in `data`.
+
 ### 2.1 Download images
 To retrieve from the GEE server the available satellite images cropped around the user-defined region of coastline for the particular time period of interest, the following variables are required in `download_configs/download_config.json`:\
 `AOI_PATH`: Path to the user-defined area of interest (AOI), an example is provided in `data/Narrabeen/AOI.geojson`.\
