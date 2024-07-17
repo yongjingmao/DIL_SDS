@@ -194,7 +194,7 @@ def plot_image_grid(images_np, nrow=8, padding=2, factor=1, interpolation='lancz
     else:
         plt.imshow(grid.transpose(1, 2, 0), interpolation=interpolation)
     
-    plt.show()
+    #plt.show()
     
     return grid
 

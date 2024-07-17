@@ -1,0 +1,44 @@
+{
+  "type": "FeatureCollection",
+  "columns": {
+    "Name": "String",
+    "system:index": "String"
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "geodesic": false,
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1.9396116061032354,
+              41.24411492485534
+            ],
+            [
+              2.0031263155758916,
+              41.24411492485534
+            ],
+            [
+              2.0031263155758916,
+              41.28321248585406
+            ],
+            [
+              1.9396116061032354,
+              41.28321248585406
+            ],
+            [
+              1.9396116061032354,
+              41.24411492485534
+            ]
+          ]
+        ]
+      },
+      "id": "0",
+      "properties": {
+        "Name": "Castelldefels"
+      }
+    }
+  ]
+}

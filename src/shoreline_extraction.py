@@ -22,7 +22,7 @@ from coastsat.SDS_shoreline import *
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_path', type=str, 
-                        default='data/Narrabeen/S1_Landsat', 
+                        default='data/Narrabeen', 
                         help='Data path for cloudy images', metavar='')
     parser.add_argument('--result_path', type=str, 
                         default='results/Narrabeen', 
@@ -34,7 +34,7 @@ def parse_args():
                         default=10, 
                         help='Number of passes in DIL run', metavar='')
     parser.add_argument('--max_dist_ref', type=int, 
-                        default=100, 
+                        default=200, 
                         help='Maximum allowed distance [m] to reference shoreline', metavar='')
     parser.add_argument('--min_length', type=int, 
                         default=50, 
@@ -84,7 +84,7 @@ def cal_position(shorelines, transects, time):
     model_result = {'Time': time}
     model_result.update(model_distance)
     model_result = pd.DataFrame(model_result)
-    return model_result
+    return model_result.set_index('Time')
 
 
 def crop_and_resize(img, resize, profile):
@@ -166,36 +166,69 @@ def main(args):
     # Read metadata
     opt_df = pd.read_csv(os.path.join(data_path, 'S1_Landsat', 'optical.csv'))
     opt_df['Time'] = pd.to_datetime(opt_df['Time'], unit='ms')
+    opt_df = opt_df.sort_values('Time').reset_index(drop=True)
     pred_ids = opt_df['Time'].dt.strftime('%Y-%m-%d')
     opt_df['pred_id'] = pred_ids
 
     # Read an image for reference
-    with rasterio.open(glob.glob(os.path.join(result_path, '**', '*.tif'))[0]) as src:
-        crs = src.crs
-        resize = (src.meta['height'] , src.meta['width'])
+    with rasterio.open(glob.glob(os.path.join(result_path, '**', '*.tif'))[0]) as src_model:
+        resize = (src_model.meta['height'] , src_model.meta['width'])
+        
+    with rasterio.open(glob.glob(os.path.join(opt_folder, '*.tif'))[0]) as src_opt:
+        crs = src_opt.crs
 
     # Read transects and reference shorelines
     gdf_transects = gpd.read_file(os.path.join(data_path, 'transects.geojson')).to_crs(crs)
     transects = dict([])
     for i in gdf_transects.index:
         transects[gdf_transects.loc[i,'TransectId']] = np.array(gdf_transects.loc[i,'geometry'].coords)
-        
     gdf_ref = gpd.read_file(os.path.join(data_path, 'ref_shoreline.geojson')).to_crs(crs)
     ref_line_coords = np.array(gdf_ref.loc[0,'geometry'].geoms[0].coords)
 
     # Create buffer around ref line
     buffer = gdf_ref.buffer(200)
-    buffer_raster = polygon_to_binary_image(buffer[0], src)
-    buffer_mask, _ = crop_and_resize(buffer_raster, resize, src.meta)
+    buffer_raster = polygon_to_binary_image(buffer[0], src_opt)
+    buffer_mask, _ = crop_and_resize(buffer_raster, resize, src_model.meta)
 
-
+    """
+    # Retrieve shoreline for targ results
+    """
+    
+    print('Extract shorelines for target results')
+    if not os.path.exists(data_path+'/S1_Landsat/SDS.csv'):
+        shorelines_true = []
+        times = []
+        for i, row in opt_df.iterrows():
+            img_name = row['optical_id'] + '.tif'
+            if os.path.exists(os.path.join(opt_folder, img_name)):
+                with rasterio.open(os.path.join(opt_folder, img_name)) as src:
+                    img = src.read().transpose(1,2,0)
+                    affine = np.array(list(src.transform))
+                    georef = list(affine[[2, 0, 1, 5, 3, 4]])
+                with rasterio.open(os.path.join(mask_folder, img_name.replace('.tif', '_Mask.tif'))) as src:
+                    mask = src.read(2) == 1
+                    mask = np.where(buffer_raster==1, mask, True)[0]
+        
+                im_mndwi = SDS_tools.nd_index(img[:,:,4], img[:,:,1], mask)
+                im_mndwi = np.where(buffer_raster==1, im_mndwi, np.nan)[0]
+                shoreline = retrieve_SDS(im_mndwi, mask, crs=int(src.crs.to_string()[5:]), 
+                                         georef=georef, min_length=min_length, ref_shoreline=ref_line_coords,
+                                         max_dist_ref=max_dist_ref)
+                shorelines_true.append(shoreline)
+                times.append(row['Time'])
+    
+        result_true = cal_position(shorelines_true, transects, times)
+        diff_true = result_true.apply(nan_diff)
+        result_true = result_true.mask(diff_true.abs()>100)
+        result_true.to_csv(data_path+'/S1_Landsat/SDS.csv')
 
     """
     # Retrieve shoreline for model results
     """
     
-    print('Extract shorelines for model results')
+    
     for pass_num in range(1, num_pass+1):
+        print('Extract shorelines for model pass {}/{}'.format(pass_num, num_pass))
         pred_folder = os.path.join(result_path, '{:03d}'.format(pass_num))
         if not os.path.exists(pred_folder+'/SDS_clear.csv'):
             shorelines_clear = []
@@ -235,45 +268,16 @@ def main(args):
 
             result_clear = cal_position(shorelines_clear, transects, times)
             result_cloud = cal_position(shorelines_cloud, transects, times)
-            result_clear.to_csv(pred_folder+'/SDS_clear.csv', index=False)
-            result_cloud.to_csv(pred_folder+'/SDS_cloud.csv', index=False)
+            result_clear.to_csv(pred_folder+'/SDS_clear.csv')
+            result_cloud.to_csv(pred_folder+'/SDS_cloud.csv')
 
-    """
-    # Retrieve shoreline for obs results
-    """
-    
-    print('Extract shorelines for target results')
-    if not os.path.exists(opt_folder+'/SDS.csv'):
-        shorelines_true = []
-        times = []
-        for i, row in opt_df.iterrows():
-            img_name = row['optical_id'] + '.tif'
-            if os.path.exists(os.path.join(opt_folder, img_name)):
-                with rasterio.open(os.path.join(opt_folder, img_name)) as src:
-                    img = src.read().transpose(1,2,0)
-                    affine = np.array(list(src.transform))
-                    georef = list(affine[[2, 0, 1, 5, 3, 4]])
-                with rasterio.open(os.path.join(mask_folder, img_name.replace('.tif', '_Mask.tif'))) as src:
-                    mask = src.read(2) == 1
-                    mask = np.where(buffer_raster==1, mask, True)[0]
-        
-                im_mndwi = SDS_tools.nd_index(img[:,:,4], img[:,:,1], mask)
-                im_mndwi = np.where(buffer_raster==1, im_mndwi, np.nan)[0]
-                shoreline = retrieve_SDS(im_mndwi, mask, crs=int(src.crs.to_string()[5:]), 
-                                         georef=georef, min_length=min_length, ref_shoreline=ref_line_coords,
-                                         max_dist_ref=max_dist_ref)
-                shorelines_true.append(shoreline)
-    
-        result_true = cal_position(shorelines_true, transects, times)
-        diff_true = result_true.apply(nan_diff)
-        result_true = result_true.mask(diff_true.abs()>100)
-        result_true.to_csv(opt_folder+'/SDS.csv')
 
     """
     # Find best SDS results from all passes
     """
-    result_true = pd.read_csv(opt_folder+'/SDS.csv', parse_dates=['Time']
+    result_true = pd.read_csv(data_path+'/S1_Landsat/SDS.csv', parse_dates=['Time']
                              ).set_index('Time').sort_index()
+    best_MAE = np.inf
     for pass_num in range(1, num_pass+1):
         pred_folder = os.path.join(result_path, '{:03d}'.format(pass_num))
         result_clear = pd.read_csv(pred_folder+'/SDS_clear.csv', parse_dates=['Time']
@@ -281,8 +285,11 @@ def main(args):
         result_cloud = pd.read_csv(pred_folder+'/SDS_cloud.csv', parse_dates=['Time']
                           ).set_index('Time').sort_index()
 
-        if len(model_result)>1:
-            diff = (result_true - result_cloud).values.reshape(-1)
+        if len(result_cloud)>1:
+            if cloud_ratio > 0:
+                diff = (result_true - result_cloud).values.reshape(-1)
+            else:
+                diff = (result_true - result_clear).values.reshape(-1)
             diff = diff[~np.isnan(diff)]
             mae = np.mean(abs(diff))
             if mae < best_MAE:
@@ -294,9 +301,9 @@ def main(args):
     """
     # Plot results
     """
-    result_true = pd.read_csv(clear_folder+'/SDS.csv').set_index('Time').sort_index()
-    result_clear = pd.read_csv(result_path, 'SDS_clear.csv').set_index('Time').sort_index()
-    result_cloud = pd.read_csv(result_path, 'SDS_cloud.csv').set_index('Time').sort_index()
+    result_true = pd.read_csv(data_path+'/S1_Landsat/SDS.csv').set_index('Time').sort_index()
+    result_clear = pd.read_csv(os.path.join(result_path, 'SDS_clear.csv')).set_index('Time').sort_index()
+    result_cloud = pd.read_csv(os.path.join(result_path, 'SDS_cloud.csv')).set_index('Time').sort_index()
     
     diff_cloud = (result_cloud - result_true).values.reshape(-1)
     diff_cloud = diff_cloud[~np.isnan(diff_cloud)]
@@ -310,8 +317,11 @@ def main(args):
     gs = gridspec.GridSpec(1,2)
     gs.update(left=0.04, right=0.97, bottom=0.06, top=0.95, hspace=0.4)
     
-    diffs = {'Under Synthetic Clouds': diff_cloud,
-            'Outside Synthetic Clouds': diff_clear}
+    if cloud_ratio > 0:
+        diffs = {'Under Synthetic Clouds': diff_cloud,
+                'Outside Synthetic Clouds': diff_clear}
+    else:
+        diffs = {'Outside Synthetic Clouds': diff_clear}        
     
     for k, key in enumerate(diffs.keys()):
         
@@ -362,7 +372,10 @@ def main(args):
         ax.scatter(time[(nan_filter)],
                    result_clear[tran_id][nan_filter.values], s=20,
                    color='g', label='Modelled shorelines outside Synthetic clouds')
-        MAE_cloud = (result_cloud[tran_id][nan_filter.values] - result_true[tran_id][nan_filter]).abs().mean()
+        if cloud_ratio > 0:
+            MAE_cloud = (result_cloud[tran_id][nan_filter.values] - result_true[tran_id][nan_filter]).abs().mean()
+        else:
+            MAE_cloud = 0
         MAE_clear = (result_clear[tran_id][nan_filter.values] - result_true[tran_id][nan_filter]).abs().mean()
 
         title_y = 1.05  # Adjust this to control the title's y position
