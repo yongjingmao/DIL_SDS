@@ -1,6 +1,7 @@
 # DIL_SDS
-This project applies a Deep Internal Learning ([DIL](https://github.com/Haotianz94/IL_video_inpainting)) to reconstruct cloud-contaminated MNDWI based on Landsat 8&9 images and extracts shoreline positions from reconstructed images with [CoastSat Toolbox](https://github.com/kvos/CoastSat). Different from the original DIL using either Gaussian noise as priors, the proposed method used the mixture of the Gaussian noise and Sentinel 1 SAR images based on the availability of SAR images. Additionally, a shoreline-focus loss function was introduced in this project to optimize the MNDWI reconstruction only in the 200 m buffer of the shoreline. 
+This project applies a Deep Internal Learning model ([DIL](https://github.com/Haotianz94/IL_video_inpainting)) to reconstruct cloud-contaminated MNDWI based on Landsat 8&9 images and extracts shoreline positions from reconstructed images with [CoastSat Toolbox](https://github.com/kvos/CoastSat). Different from the original DIL using either Gaussian noise as priors, the proposed method used the mixture of the Gaussian noise and Sentinel 1 SAR images based on the availability of SAR images. Additionally, a shoreline-focus loss function was introduced in this project to optimize the MNDWI reconstruction only in the 200 m buffer of the shoreline. The model architecture is shown below.
 
+<img src="figures/DIL_architecture.jpg" width="1000">
 
 ## 1.Install
 ### 1.1 Creat coastsat env to download images and extract shorelines
@@ -50,14 +51,19 @@ python src/S1_download.py
 ### 2.2 Preprocess images (pairing, warp, and cloud synthesizing)
 Run `preprocess.py` to pair, warp and superimpose clouds to clear optical images. The following arguements are required:\
 `--data_path`: The path of previously downloaded data (The same as `OUT_DIR`).\
-`--cloud_ratio`: The ratio of cloud to superimpose, ranging between 0 and 1.\
+`--cloud_ratio`: The ratio of synthetic cloud to superimpose, ranging between 0 and 1.\
 `--temporal_var`: Stores true value. Adding this arguement will add seasonallity to synthetic clouds.
 
 ```
 conda activate coastsat
 python src/preprocess.py --data_path data/Narrabeen  --cloud_ratio 0.5
 ```
-- Resultant synthetic images of optical, mndwi and cloud mask are saved in subfolders `Optical_50`, `MNDWI_50`and `Mask_50` in `data_path/S1_Landsat` respectively
+- To reconstruct images contanimated by natural cloud only in real application, set cloud_ratio to 0.
+- Resultant synthetic images of optical, mndwi and cloud mask are saved in subfolders `Optical_50`, `MNDWI_50`and `Mask_50` in `data_path/S1_Landsat` respectively.
+
+Examples of preprocessed images with cloud cover rate being 0.25, 0.5, and 0.75 (25%, 50% and 70% in percentage) are shown in the figure below.
+
+<img src="figures/synthesized_clouds.jpg" width="800">
 
 ### 2.3 Run DIL model for image reconstruction
 Use `DIL_run.py` to reconstruct cloud contaminated images. The DIL model requires a reference shoreline and an exaple is provided as `data/Narrabeen/ref_shoreline.geojson`.\
@@ -75,8 +81,12 @@ The following arguements are required:\
 conda activate DIL
 python src/DIL_run.py --data_path data/Narrabeen --res_dir results/Narrabeen --train_mode DIP-Vid-3DCN --resize 384 192 --batch_size 5 --input_type S1 --cloud_ratio 0.5 --num_pass 10 
 ```
+- To reconstruct images contanimated by natural cloud only in real application, set cloud_ratio to 0.
 - More parameters of DIL model itself can be tuned in the config files in `DIL/configs`.
 - Mdel result of each pass will be saved in `res_dir` as an individual subfolder.
+
+The image reconstruction results are shown in the figure below.
+<img src="figures/reconstruction_visualization.jpg" width="800">
 
 ### 2.4 Run CoastSat for shoreline extraction
 Run `shoreline_extraction.py` to extract shorelines based on target and modelled MNDWI images. The following arguements are required:\
@@ -91,6 +101,12 @@ conda activate coastsat
 python src/shoreline_extraction.py --data_path data/Narrabeen --result_path results/Narrabeen --cloud_ratio 0.5 --num_pass 10 --max_dist_ref 200 --min_length 50
 ```
 - Target shoreline positions are saved as `SDS.csv` in `data_path/S1_Landsat`; modelled shorelne positions under and outside of synthetic clouds are saved as `SDS_cloud.csv` and `SDS_clear.csv` in `result_path`.
+
+The metrics of modelled shoreline position compared to the target are shown in the figures below.
+
+<img src="figures/error_metrics.jpg" width="800">
+
+<img src="figures/timeseries.jpg" width="800">
 
 ## Acknowledgement
 The implementation of the DIL network architecture is mostly borrowed from the [IL_video_inpainting](https://github.com/Haotianz94/IL_video_inpainting/tree/master). The shoreline extraction is mostly based on the [CoastSat Toolbox](https://github.com/kvos/CoastSat/tree/master). Should you be making use of this work, please make sure to adhere to the licensing terms of the original authors.
