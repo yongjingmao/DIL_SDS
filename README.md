@@ -60,7 +60,7 @@ python src/preprocess.py --data_path data/Narrabeen  --cloud_ratio 0.5
 ```
 - To reconstruct images contanimated by natural cloud only in real application, set cloud_ratio to 0.
 - Resultant synthetic images of optical, mndwi and cloud mask are saved in subfolders `Optical_50`, `MNDWI_50`and `Mask_50` in `data_path/S1_Landsat` respectively.
-
+The preprocessed images can also be downloaded from the [Zenodo dataset](https://zenodo.org/records/13948524?preview=1&token=eyJhbGciOiJIUzUxMiJ9.eyJpZCI6IjE3OWRhYWJhLTZlODEtNDU1Ny1hMmQ3LWExM2E1NTg1NTQyOCIsImRhdGEiOnt9LCJyYW5kb20iOiI5YWFmZjZiNzdmNzA0NGM0YzdjN2M2NTdhMWYyZjYxNyJ9.Uw6GnLHAuijd06e4-ESHtbMVAyzx2DMNPsRFAq0LSMt863F-ss9gBFZow8oo7NBz3IFfXKz5Ii5SY1FaFvm8MQ).
 Examples of preprocessed images with cloud cover rate being 0.25, 0.5, and 0.75 (25%, 50% and 70% in percentage) are shown in the figure below.
 
 <img src="figures/synthesized_clouds.jpg" width="800">
@@ -100,7 +100,8 @@ Run `shoreline_extraction.py` to extract shorelines based on target and modelled
 conda activate coastsat
 python src/shoreline_extraction.py --data_path data/Narrabeen --result_path results/Narrabeen --cloud_ratio 0.5 --num_pass 10 --max_dist_ref 200 --min_length 50
 ```
-- Target shoreline positions are saved as `SDS.csv` in `data_path/S1_Landsat`; modelled shorelne positions under and outside of synthetic clouds are saved as `SDS_cloud.csv` and `SDS_clear.csv` in `result_path`.
+- Target shoreline positions are saved as `SDS.csv` in `data_path/S1_Landsat`; modelled shorelne positions under and outside of synthetic clouds are saved as `SDS_cloud.csv` and `SDS_clear.csv` in `result_path`.\
+The SDS results from input images in [Zenodo dataset](https://zenodo.org/records/13948524?preview=1&token=eyJhbGciOiJIUzUxMiJ9.eyJpZCI6IjE3OWRhYWJhLTZlODEtNDU1Ny1hMmQ3LWExM2E1NTg1NTQyOCIsImRhdGEiOnt9LCJyYW5kb20iOiI5YWFmZjZiNzdmNzA0NGM0YzdjN2M2NTdhMWYyZjYxNyJ9.Uw6GnLHAuijd06e4-ESHtbMVAyzx2DMNPsRFAq0LSMt863F-ss9gBFZow8oo7NBz3IFfXKz5Ii5SY1FaFvm8MQ) are provided for benchmark. **Please note that due to the randomness in the generation of synthetic cloud, the SDS results have to be updated correspondingly after re-running _2.1 Download images_.**
 
 The metrics of modelled shoreline position compared to the target are shown in the figures below.
 
