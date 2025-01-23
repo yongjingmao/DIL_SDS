@@ -1,5 +1,5 @@
 # DIL_SDS
-This project applies a Deep Internal Learning model ([DIL](https://github.com/Haotianz94/IL_video_inpainting)) to reconstruct cloud-contaminated MNDWI based on Landsat 8&9 images and extracts shoreline positions from reconstructed images with [CoastSat Toolbox](https://github.com/kvos/CoastSat). Different from the original DIL using either Gaussian noise as priors, the proposed method used the mixture of the Gaussian noise and Sentinel 1 SAR images based on the availability of SAR images. Additionally, a shoreline-focus loss function was introduced in this project to optimize the MNDWI reconstruction only in the 200 m buffer of the shoreline. The model architecture is shown below.
+This project applies a Deep Internal Learning model ([DIL](https://github.com/Haotianz94/IL_video_inpainting)) to reconstruct cloud-contaminated MNDWI based on Landsat 8&9 images and extracts shoreline positions from reconstructed images with [CoastSat Toolbox](https://github.com/kvos/CoastSat). Different from the original DIL using either Gaussian noise as priors, the proposed method used the mixture of the Gaussian noise and Sentinel 1 SAR images based on the availability of SAR images. Additionally, a shoreline-focus loss function was introduced in this project to optimize the MNDWI reconstruction only in the 200 m buffer of the shoreline. The model architecture is shown below. The detailed methodology is described in [[1](https://doi.org/10.1016/j.isprsjprs.2025.01.013)].
 
 <img src="figures/DIL_architecture.jpg" width="1000">
 
@@ -111,3 +111,7 @@ The metrics of modelled shoreline position compared to the target are shown in t
 
 ## Acknowledgement
 The implementation of the DIL network architecture is mostly borrowed from the [IL_video_inpainting](https://github.com/Haotianz94/IL_video_inpainting/tree/master). The shoreline extraction is mostly based on the [CoastSat Toolbox](https://github.com/kvos/CoastSat/tree/master). Should you be making use of this work, please make sure to adhere to the licensing terms of the original authors.
+
+## Reference
+[[1](https://doi.org/10.1016/j.isprsjprs.2025.01.013)]
+Mao, Y. and Splinter, K.D., 2025. Application of SAR-Optical fusion to extract shoreline position from Cloud-Contaminated satellite images. ISPRS Journal of Photogrammetry and Remote Sensing, 220, pp.563-579.
